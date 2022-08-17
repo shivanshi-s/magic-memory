@@ -3,12 +3,12 @@ import './App.css';
 import SingleCard from './components/SingleCard';
 
 const cardImages = [
-{"src" : "img/helmet-1.png"},
-{"src" : "img/potion-1.png"},
-{"src" : "img/ring-1.png"},
-{"src" : "img/scroll-1.png"},
-{"src" : "img/shield-1.png"},
-{"src" : "img/sword-1.png"}
+{"src" : "img/helmet-1.png" , matched : false},
+{"src" : "img/potion-1.png" , matched : false},
+{"src" : "img/ring-1.png" , matched : false},
+{"src" : "img/scroll-1.png" , matched : false},
+{"src" : "img/shield-1.png" , matched : false},
+{"src" : "img/sword-1.png" , matched : false}
 ]
 
 function App() {
@@ -17,6 +17,7 @@ function App() {
   const [turns, setTurns] = useState(0)
   const [choiceOne, setChoiceOne] = useState(null)
   const [choiceTwo, setChoiceTwo] = useState(null)
+  const [disabled, setDisabled] = useState(false)
 
 
   const shuffleCards = () => {
@@ -27,15 +28,19 @@ function App() {
 // fire a func for each item and add an id object, func takes card property spreads it and adds on id
           .map( (card) => ({...card , id : Math.random() } ))
 // end result - shuffled card and now store them in a state
-    setCards(shuffledCards);
-    setTurns(0);
-
+    setCards(shuffledCards)
+    setTurns(0)
+    
+    // set choices to reset
+    setChoiceOne(null)
+    setChoiceTwo(null)
   }
 
 // console.log(cards, turns);
 
 // handle the choice
 const handleChoice = (card) => {
+  console.log(card);
  choiceOne ? setChoiceTwo(card) : setChoiceOne(card)
 }
 
@@ -43,23 +48,39 @@ const handleChoice = (card) => {
 useEffect( () => {
   // chexk if we have the same value for c1 and choice 2
   if (choiceOne && choiceTwo){
+    setDisabled(true)
     if(choiceOne.src === choiceTwo.src){
       // matched
-      console.log("matched");
-      resetTurn();
+      setCards(prevCards => {
+          return prevCards.map(card => {
+            if(card.src === choiceOne.src){
+                return {...card, matched : true}
+            } else {
+              return card
+            }
+          })
+      })
+      resetTurn()
     } else {
       //  not matched
-      console.log("not matched");
-      resetTurn();
+      setTimeout(() => resetTurn(), 1000)
     }
   }
-})
+}, [choiceOne, choiceTwo])
+
+// useeffect to fire the component when it first loads
+useEffect( () => {
+  shuffleCards()
+}, [])
+
+console.log(cards);
 
 //  reset choices and increase turn
 const resetTurn = () => {
   setChoiceOne(null)
   setChoiceTwo(null)
   setTurns(prevTurns => prevTurns + 1)
+  setDisabled(false)
 }
 
   return (
@@ -70,12 +91,15 @@ const resetTurn = () => {
       <div className="card-grid">
           {cards.map( card => (
             <SingleCard 
-            key={card.id} 
-            card={card} 
+              key={card.id} 
+              card={card} 
               handleChoice={handleChoice}
+              flipped = {card === choiceOne || card === choiceTwo || card.matched}
+              disabled = {disabled}
             />    
             ))}
       </div>
+      <p>Turns : {turns}</p>
     </div>
   );
 }
